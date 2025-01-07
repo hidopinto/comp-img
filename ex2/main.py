@@ -1,4 +1,6 @@
 import numpy as np
+from scipy.optimize import minimize
+
 from coords import square_coords
 import cv2
 from src.cp_hw2 import read_colorchecker_gm
@@ -84,11 +86,51 @@ def make_single_long_rgb_matrix(avg_rgb_list):
     return res
 
 
-def do_colour_solve(avg_rgb, target):
+def do_colour_solver(avg_rgb, target):
     tall_long_rgb_matrix = np.concatenate([make_single_long_rgb_matrix(avg_rgb[:, i]) for i in range(24)], axis=0)
     tall_target = target.transpose(2, 1, 0).ravel()
     return np.linalg.pinv(
         tall_long_rgb_matrix.transpose() @ tall_long_rgb_matrix) @ tall_long_rgb_matrix.transpose() @ tall_target
+
+
+def objective(M_flat, pred, label):
+    """
+    Objective function: minimize the Frobenius norm
+    :param M_flat:
+    :param pred:
+    :param label:
+    :return:
+    """
+    M = M_flat.reshape(4, 4)
+    diff = (pred @ M)[:, :3] - label
+    return np.linalg.norm(diff, ord='fro') ** 2
+
+
+def affine_constraint(M_flat):
+    """
+    Constraint: enforce the last row of M to be [0, 0, 0, 1]
+    :param M_flat:
+    :return:
+    """
+    M = M_flat.reshape(4, 4)
+    return M[3, :] - np.array([0, 0, 0, 1])
+
+
+def affine_color_solver(avg_rgb, target):
+    # shape (24, 4)
+    pred = avg_rgb.transpose(1, 0)
+    # shape (24, 3)
+    label = target.reshape(3, 24).transpose(1, 0)
+
+    # Initial guess for M with shape (4, 4)
+    M_initial = np.eye(4).flatten()
+
+    constraint = {'type': 'eq', 'fun': affine_constraint}
+    result = minimize(objective, M_initial, args=(pred, label), constraints=[constraint])
+
+    affine_matrix = result.x.reshape(4, 4)
+
+    return affine_matrix
 
 
 def q_2(hdr_img):
@@ -98,7 +140,7 @@ def q_2(hdr_img):
         y = square_coords[:, 1, i]
         avg_rgb[:, i] = list(hdr_img[min(x):max(x), min(y):max(y), :].mean(axis=(0, 1))) + [1]
     target = np.array(read_colorchecker_gm())
-    T = do_colour_solve(avg_rgb, target).reshape(3, 4)
+    T = affine_color_solver(avg_rgb, target)[:3, :].reshape(3, 4)
     hdr_img_extra_channel = np.concatenate(
         [hdr_img, np.ones((hdr_img.shape[0], hdr_img.shape[1], 1), dtype=np.float64)],
         axis=-1
