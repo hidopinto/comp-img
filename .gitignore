@@ -183,3 +183,5 @@ data/
 *.jpg
 *.png
 *.tiff
+*.hdr
+*.HDR

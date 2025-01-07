@@ -6,9 +6,8 @@ from cp_hw2 import lRGB2XYZ, XYZ2lRGB, writeEXR, read_colorchecker_gm
 
 import numpy as np
 import cv2
-
-
 # import Imath
+
 
 def read_colorchecker_gm():
     """Returns a 4x6 matrix with sRGB linear values of the Greatg-Macbeth color checker
