@@ -73,8 +73,10 @@ def photographic_tone_mapping(img: np.ndarray, K: float=0.15, B: float=0.95, eps
 
 
 def main():
-    hdr_img = cv2.imread("uniform.HDR")
+    hdr_img = cv2.imread("gaussian.HDR")
     tone_mapped_img = photographic_tone_mapping(hdr_img)
+
+    writeHDR('gaussian_tone_mapped.HDR', tone_mapped_img)
 
 
 if __name__ == '__main__':
