@@ -43,13 +43,38 @@ def XYZ_to_xyY(XYZ_img: np.ndarray, eps: float = np.finfo(float).eps):
     return xyY_img
 
 
-def q3(img: np.ndarray, K: float=0.15, B: float=0.95, eps: float = np.finfo(float).eps):
+def q3_rgb(img: np.ndarray, K: float=0.15, B: float=0.95, eps: float = np.finfo(float).eps):
     """
     Perform the tone-mapping on an input image.
     :param img: The input image to tone-map.
     :param K: The intensity of the shift acted upon the input img mean.
     :param B: The amount of contrast suppression that will be performed in the output image.
-    :param N: The number of pixels in the image.
+    :param eps: A small constant being used for numerical stability purposes.
+    :return: a new tone-mapped image as a np.ndarray.
+    """
+    # extract RGB channels
+    r = img[:, :, 0]
+    g = img[:, :, 1]
+    b = img[:, :, 2]
+    N = r.shape[0] * r.shape[1]
+
+    # tone-map on the RGB channels
+    r_tone_mapped = tone_map(r, N, K, B, eps)
+    g_tone_mapped = tone_map(g, N, K, B, eps)
+    b_tone_mapped = tone_map(b, N, K, B, eps)
+
+    # re-stack the rgb channels
+    tone_mapped_img = np.dstack([r_tone_mapped, g_tone_mapped, b_tone_mapped])
+
+    return tone_mapped_img
+
+
+def q3_luminance(img: np.ndarray, K: float=0.15, B: float=0.95, eps: float = np.finfo(float).eps):
+    """
+    Perform the tone-mapping on an input image.
+    :param img: The input image to tone-map.
+    :param K: The intensity of the shift acted upon the input img mean.
+    :param B: The amount of contrast suppression that will be performed in the output image.
     :param eps: A small constant being used for numerical stability purposes.
     :return: a new tone-mapped image as a np.ndarray.
     """
@@ -79,7 +104,7 @@ def q3(img: np.ndarray, K: float=0.15, B: float=0.95, eps: float = np.finfo(floa
 
 def main():
     hdr_img = cv2.imread("gaussian.HDR")
-    tone_mapped_img = q3(hdr_img, eps=1e7)
+    tone_mapped_img = q3_luminance(hdr_img, eps=1e7)
 
     writeHDR('gaussian_tone_mapped.HDR', tone_mapped_img)
 
