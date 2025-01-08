@@ -4,7 +4,7 @@ import numpy as np
 from src.cp_hw2 import lRGB2XYZ, XYZ2lRGB, writeHDR, read_colorchecker_gm, xyY_to_XYZ
 
 
-def tone_map(image_illumination: np.ndarray, N: int, K: float=0.15, B: float=0.95, eps: float=1e7):
+def tone_map(image_illumination: np.ndarray, N: int, K: float=0.15, B: float=0.95, eps: float = np.finfo(float).eps):
     """
     Perform the tone-mapping on an input image.
     :param image_illumination: The illumination of the input image to tone-map(equivalent to the Y in xyY format).
@@ -22,7 +22,7 @@ def tone_map(image_illumination: np.ndarray, N: int, K: float=0.15, B: float=0.9
     return i_tm
 
 
-def XYZ_to_xyY(XYZ_img: np.ndarray):
+def XYZ_to_xyY(XYZ_img: np.ndarray, eps: float = np.finfo(float).eps):
     """
     Parse the image from a XYZ to xyY format.
     Both input and output are np.ndarray
@@ -33,14 +33,17 @@ def XYZ_to_xyY(XYZ_img: np.ndarray):
     Y = XYZ_img[:, :, 1]
     Z = XYZ_img[:, :, 2]
 
-    x = X / (X + Y + Z)
-    y = Y / (X + Y + Z)
+    denom = X + Y + Z
+    denom = np.where(denom == 0, eps, denom)
+
+    x = X / denom
+    y = Y / denom
 
     xyY_img = np.dstack((x, y, Y))
     return xyY_img
 
 
-def photographic_tone_mapping(img: np.ndarray, K: float=0.15, B: float=0.95, eps: float=1e7):
+def photographic_tone_mapping(img: np.ndarray, K: float=0.15, B: float=0.95, eps: float = np.finfo(float).eps):
     """
     Perform the tone-mapping on an input image.
     :param img: The input image to tone-map.
@@ -64,7 +67,9 @@ def photographic_tone_mapping(img: np.ndarray, K: float=0.15, B: float=0.95, eps
     Y_tone_mapped_img = tone_map(Y, N, K, B, eps)
 
     # parse the image with the newly tone-mapped Y from xyY to XYZ
-    xyz_tone_mapped_img = xyY_to_XYZ(x, y, Y_tone_mapped_img)
+    # Avoid division by zero by adding a small epsilon where y is zero
+    # y_w_eps = np.where(y == 0, eps, y)
+    xyz_tone_mapped_img = np.dstack(xyY_to_XYZ(x, y, Y_tone_mapped_img))
 
     # parse the image from XYZ to RGB
     tone_mapped_img = XYZ2lRGB(xyz_tone_mapped_img)
@@ -74,7 +79,7 @@ def photographic_tone_mapping(img: np.ndarray, K: float=0.15, B: float=0.95, eps
 
 def main():
     hdr_img = cv2.imread("gaussian.HDR")
-    tone_mapped_img = photographic_tone_mapping(hdr_img)
+    tone_mapped_img = photographic_tone_mapping(hdr_img, eps=1e7)
 
     writeHDR('gaussian_tone_mapped.HDR', tone_mapped_img)
 

@@ -102,8 +102,8 @@ def objective(M_flat, pred, label):
     :return:
     """
     M = M_flat.reshape(4, 4)
-    diff = (pred @ M)[:, :3] - label
-    return np.linalg.norm(diff, ord='fro') ** 2
+    diff = (M @ pred.T).T[:, :3] - label
+    return np.linalg.norm(diff, ord='2') ** 2
 
 
 def affine_constraint(M_flat):
@@ -117,9 +117,9 @@ def affine_constraint(M_flat):
 
 
 def affine_color_solver(avg_rgb, target):
-    # shape (24, 4)
+    # pred shape (24, 4)
     pred = avg_rgb.transpose(1, 0)
-    # shape (24, 3)
+    # label shape (24, 3)
     label = target.reshape(3, 24).transpose(1, 0)
 
     # Initial guess for M with shape (4, 4)
