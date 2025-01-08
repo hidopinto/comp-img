@@ -43,7 +43,7 @@ def XYZ_to_xyY(XYZ_img: np.ndarray, eps: float = np.finfo(float).eps):
     return xyY_img
 
 
-def photographic_tone_mapping(img: np.ndarray, K: float=0.15, B: float=0.95, eps: float = np.finfo(float).eps):
+def q3(img: np.ndarray, K: float=0.15, B: float=0.95, eps: float = np.finfo(float).eps):
     """
     Perform the tone-mapping on an input image.
     :param img: The input image to tone-map.
@@ -79,7 +79,7 @@ def photographic_tone_mapping(img: np.ndarray, K: float=0.15, B: float=0.95, eps
 
 def main():
     hdr_img = cv2.imread("gaussian.HDR")
-    tone_mapped_img = photographic_tone_mapping(hdr_img, eps=1e7)
+    tone_mapped_img = q3(hdr_img, eps=1e7)
 
     writeHDR('gaussian_tone_mapped.HDR', tone_mapped_img)
 

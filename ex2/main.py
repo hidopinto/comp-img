@@ -57,11 +57,10 @@ def form_hdr(ldr_files, w_func, Z_min, Z_max, tks):
     return all_corrected
 
 
-def q_1():
+def q_1(files):
     Z_min = 0.02
     Z_max = 0.95
     tks = [1 / 2048 * (2 ** (i - 1)) for i in range(1, 17)]
-    files = list(map(lambda x: read_tiff(x), list(range(1, 17))))
     saved_uniform = form_hdr(files, w_uniform, Z_min, Z_max, tks)
     cv2.imwrite("uniform.HDR", saved_uniform[:, :, ::-1].astype(np.float32))
     saved_tent = form_hdr(files, w_tent, Z_min, Z_max, tks)
@@ -156,7 +155,8 @@ def q_2(hdr_img):
 
 def main():
     matplotlib.use("TkAgg")
-    hdr_img = q_1()
+    files = list(map(lambda x: read_tiff(x), list(range(1, 17))))
+    hdr_img = q_1(files)
     q_2(hdr_img)
 
 
